@@ -306,7 +306,7 @@ get_channel_url() {
     
     while true; do
         read -p "Enter Channel URL [default: https://t.me/trenzych]: " CHANNEL_URL
-        CHANNEL_URL=${CHANNEL_URL:-"https://t.me/premium_channel_404"}
+        CHANNEL_URL=${CHANNEL_URL:-"https://t.me/trenzych"}
         
         # Remove any trailing slashes
         CHANNEL_URL=$(echo "$CHANNEL_URL" | sed 's|/*$||')
