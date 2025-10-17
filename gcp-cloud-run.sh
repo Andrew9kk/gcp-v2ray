@@ -544,7 +544,7 @@ TELEGRAM_BOT_TOKEN="YOUR_BOT_TOKEN"
 TELEGRAM_CHAT_ID="YOUR_CHAT_ID"
 
 # ✅ Compose Telegram message (HTML format)
-MSG=$(cat <<EOF
+MESSAGE=$(cat <<EOF
 ✅ <b>GCP VLESS Deployment Success</b>
 ━━━━━━━━━━━━━━━━━━━━
 <blockquote>
