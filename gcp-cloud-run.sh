@@ -628,7 +628,7 @@ END_TIME=$(TZ='Asia/Yangon' date -d "+5 hours" +"%d-%m-%Y (%I:%M %p)")
     VLESS_LINK="vless://${UUID}@${HOST_DOMAIN}:443?path=%2Ftg-%40trenzych&security=tls&alpn=h3%2Ch2%2Chttp%2F1.1&encryption=none&host=${DOMAIN}&fp=randomized&type=ws&sni=${DOMAIN}#${SERVICE_NAME}"
 
     # ✅ Telegram Message  
-MESSAGE=" *GCP VLESS Deployment Success*
+MESSAGE=" *MYTEL GCP VLESS DEPLOYMENT*
 ━━━━━━━━━━━━━━━━━━━━
 *• Service:* \`${SERVICE_NAME}\`
 *• Region:* \`${REGION}\`
