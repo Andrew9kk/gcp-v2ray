@@ -539,9 +539,9 @@ END_TIME=$(TZ='Asia/Yangon' date -d "+5 hours" +"%Y-%m-%d %I:%M:%S %p")
 # VLESS link
 VLESS_LINK="vless://${UUID}@${HOST_DOMAIN}:443?path=%2Ftg-%40trenzych&security=tls&alpn=h3%2Ch2%2Chttp%2F1.1&encryption=none&host=${DOMAIN}&fp=randomized&type=ws&sni=${DOMAIN}#${SERVICE_NAME}"
 
-# ✅ Telegram Message creation (HTML format, full quote sections)
-MESSAGE=$(cat <<EOF
-<blockquote><b>GCP VLESS Deployment Success ✅</b></blockquote>
+# ✅ Telegram Message creation (HTML format)
+MESSAGE=$(cat <<'EOF'
+<blockquote><b>GCP VLESS Deployment Success</b></blockquote>
 ━━━━━━━━━━━━━━━━━━━━
 <blockquote>
 <b>• Service:</b> <code>${SERVICE_NAME}</code><br>
@@ -557,6 +557,17 @@ MESSAGE=$(cat <<EOF
 <i>Usage: Copy the above link and import to your V2Ray client App</i>
 EOF
 )
+
+# Replace variables manually in message
+MESSAGE=$(echo "$MESSAGE" | \
+  sed "s|\${SERVICE_NAME}|${SERVICE_NAME}|g" | \
+  sed "s|\${REGION}|${REGION}|g" | \
+  sed "s|\${CPU}|${CPU}|g" | \
+  sed "s|\${MEMORY}|${MEMORY}|g" | \
+  sed "s|\${DOMAIN}|${DOMAIN}|g" | \
+  sed "s|\${START_TIME}|${START_TIME}|g" | \
+  sed "s|\${END_TIME}|${END_TIME}|g" | \
+  sed "s|\${VLESS_LINK}|${VLESS_LINK}|g")
 
 # ✅ Send to Telegram (HTML parse mode)
 curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
