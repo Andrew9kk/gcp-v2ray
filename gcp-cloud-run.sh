@@ -651,13 +651,13 @@ ${VLESS_LINK}
 _Usage: Copy the above link and import to your V2Ray client_"
     
     # Save to file
-    echo "$CONSOLE_MESSAGE" > deployment-info.txt
+    echo "$MESSAGE" > deployment-info.txt
     log "Deployment info saved to deployment-info.txt"
     
     # Display locally
     echo
     info "=== Deployment Information ==="
-    echo "$CONSOLE_MESSAGE"
+    echo "$MESSAGE"
     echo
     
     # Send to Telegram based on user selection
