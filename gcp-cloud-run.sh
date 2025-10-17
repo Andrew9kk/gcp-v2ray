@@ -542,13 +542,13 @@ VLESS_LINK="vless://${UUID}@${HOST_DOMAIN}:443?path=%2Ftg-%40trenzych&security=t
 # ✅ Telegram Message creation (HTML format with selective quote)
 MESSAGE="<blockquote><b>GCP VLESS Deployment Success ✅</b></blockquote>
 ━━━━━━━━━━━━━━━━━━━━
-<b>• Service:</b> <code>${SERVICE_NAME}</code>
+<blockquote><b>• Service:</b> <code>${SERVICE_NAME}</code>
 <b>• Region:</b> <code>${REGION}</code>
 <b>• Resources:</b> <code>${CPU} CPU | ${MEMORY} RAM</code>
 <b>• Domain:</b> <code>${DOMAIN}</code>
 
 <b>• Start:</b> <code>${START_TIME}</code>
-<b>• End:</b> <code>${END_TIME}</code>
+<b>• End:</b> <code>${END_TIME}</code></blockquote>
 ━━━━━━━━━━━━━━━━━━━━
 <blockquote><b>V2Ray Configuration Access Key</b></blockquote>
 <code>${VLESS_LINK}</code>
