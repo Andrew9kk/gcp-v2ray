@@ -523,48 +523,48 @@ main() {
     fi
     
     # Get the service URL
-    SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} \
-        --region ${REGION} \
-        --format 'value(status.url)' \
-        --quiet)
+SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} \
+    --region ${REGION} \
+    --format 'value(status.url)' \
+    --quiet)
 
-    DOMAIN=$(echo $SERVICE_URL | sed 's|https://||')
+DOMAIN=$(echo $SERVICE_URL | sed 's|https://||')
 
-    # 🕒 Start time (MMT, 12-hour format)
+# 🕒 Start time (MMT, 12-hour format)
 START_TIME=$(TZ='Asia/Yangon' date +"%Y-%m-%d %I:%M:%S %p")
 
 # ⏰ End time = 5 hours from now (MMT, 12-hour format)
 END_TIME=$(TZ='Asia/Yangon' date -d "+5 hours" +"%Y-%m-%d %I:%M:%S %p")
 
-    # VLESS link
-    VLESS_LINK="vless://${UUID}@${HOST_DOMAIN}:443?path=%2Ftg-%40trenzych&security=tls&alpn=h3%2Ch2%2Chttp%2F1.1&encryption=none&host=${DOMAIN}&fp=randomized&type=ws&sni=${DOMAIN}#${SERVICE_NAME}"
+# VLESS link
+VLESS_LINK="vless://${UUID}@${HOST_DOMAIN}:443?path=%2Ftg-%40trenzych&security=tls&alpn=h3%2Ch2%2Chttp%2F1.1&encryption=none&host=${DOMAIN}&fp=randomized&type=ws&sni=${DOMAIN}#${SERVICE_NAME}"
 
-    # ✅ Telegram Message creation 
-MESSAGE=" *GCP VLESS Deployment Success*
+# ✅ Telegram Message creation (HTML format with selective quote)
+MESSAGE="<blockquote><b>GCP VLESS Deployment Success ✅</b></blockquote>
 ━━━━━━━━━━━━━━━━━━━━
-*• Service:* \`${SERVICE_NAME}\`
-*• Region:* \`${REGION}\`
-*• Resources:* \`${CPU} CPU | ${MEMORY} RAM\`
-*• Domain:* \`${DOMAIN}\`
+<b>• Service:</b> <code>${SERVICE_NAME}</code>
+<b>• Region:</b> <code>${REGION}</code>
+<b>• Resources:</b> <code>${CPU} CPU | ${MEMORY} RAM</code>
+<b>• Domain:</b> <code>${DOMAIN}</code>
 
-*• Start:* \`${START_TIME}\`
-*• End:* \`${END_TIME}\`
+<b>• Start:</b> <code>${START_TIME}</code>
+<b>• End:</b> <code>${END_TIME}</code>
 ━━━━━━━━━━━━━━━━━━━━
-*V2Ray Configuration Access Key:*
-\`\`\`
-${VLESS_LINK}
-\`\`\`
-_Usage: Copy the above link and import to your V2Ray client App_"
+<blockquote><b>V2Ray Configuration Access Key</b></blockquote>
+<code>${VLESS_LINK}</code>
 
-# ✅ Send to Telegram (MarkdownV2)
+<i>Usage: Copy the above link and import to your V2Ray client App</i>"
+
+# ✅ Send to Telegram (HTML parse mode)
 curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
   -d "chat_id=${TELEGRAM_CHAT_ID}" \
   -d "text=${MESSAGE}" \
-  -d "parse_mode=MarkdownV2" \
+  -d "parse_mode=HTML" \
   -d "disable_web_page_preview=true" \
   -d "reply_markup={\"inline_keyboard\":[[{\"text\":\"📋 COPY CODE\",\"url\":\"https://t.me/share/url?url=${VLESS_LINK}\"}]]}"
-    # ✅ Console Output Message
-    CONSOLE_MESSAGE="GCP VLESS Deployment → Success ✅
+
+# ✅ Console Output
+CONSOLE_MESSAGE="GCP VLESS Deployment → Success ✅
 ━━━━━━━━━━━━━━━━━━━━
 • Project: ${PROJECT_ID}
 • Service: ${SERVICE_NAME}
@@ -579,7 +579,6 @@ ${VLESS_LINK}
 
 ━━━━━━━━━━━━━━━━━━━━
 Usage: Copy the above link and import to your V2Ray client."
-
 # Save to file
     echo "$CONSOLE_MESSAGE" > deployment-info.txt
     log "Deployment info saved to deployment-info.txt"
