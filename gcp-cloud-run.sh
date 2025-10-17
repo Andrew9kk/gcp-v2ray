@@ -648,7 +648,7 @@ MESSAGE=" *GCP VLESS Deployment Success*
 \`\`\`
 ${VLESS_LINK}
 \`\`\`
-_Usage: Copy the above link and import to your V2Ray client_"
+_Usage: Copy the above link and import to your V2Ray client App_"
     
     # Save to file
     echo "$MESSAGE" > deployment-info.txt
