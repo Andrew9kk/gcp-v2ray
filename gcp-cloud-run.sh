@@ -539,44 +539,31 @@ END_TIME=$(TZ='Asia/Yangon' date -d "+5 hours" +"%Y-%m-%d %I:%M:%S %p")
 # VLESS link
 VLESS_LINK="vless://${UUID}@${HOST_DOMAIN}:443?path=%2Ftg-%40trenzych&security=tls&alpn=h3%2Ch2%2Chttp%2F1.1&encryption=none&host=${DOMAIN}&fp=randomized&type=ws&sni=${DOMAIN}#${SERVICE_NAME}"
 
-# ✅ Telegram Message creation (HTML format)
-MESSAGE=$(cat <<'EOF'
-<blockquote><b>GCP VLESS Deployment Success</b></blockquote>
+# 🟢 Telegram Quote Style Message (MarkdownV2)
+MESSAGE="> *GCP VLESS Deployment Success *
 ━━━━━━━━━━━━━━━━━━━━
-<blockquote>
-<b>• Service:</b> <code>${SERVICE_NAME}</code><br>
-<b>• Region:</b> <code>${REGION}</code><br>
-<b>• Resources:</b> <code>${CPU} CPU | ${MEMORY} RAM</code><br>
-<b>• Domain:</b> <code>${DOMAIN}</code><br><br>
-<b>• Start:</b> <code>${START_TIME}</code><br>
-<b>• End:</b> <code>${END_TIME}</code>
-</blockquote>
+> *• Service:* \`${SERVICE_NAME}\`
+> *• Region:* \`${REGION}\`
+> *• Resources:* \`${CPU} CPU | ${MEMORY} RAM\`
+> *• Domain:* \`${DOMAIN}\`
+>
+> *• Start:* \`${START_TIME}\`
+> *• End:* \`${END_TIME}\`
 ━━━━━━━━━━━━━━━━━━━━
-<blockquote><b>V2Ray Configuration Access Key</b></blockquote>
-<code>${VLESS_LINK}</code><br><br>
-<i>Usage: Copy the above link and import to your V2Ray client App</i>
-EOF
-)
+> *V2Ray Configuration Access Key*
+\`\`\`
+${VLESS_LINK}
+\`\`\`
+_Usage: Copy the above link and import to your V2Ray client App_"
 
-# Replace variables manually in message
-MESSAGE=$(echo "$MESSAGE" | \
-  sed "s|\${SERVICE_NAME}|${SERVICE_NAME}|g" | \
-  sed "s|\${REGION}|${REGION}|g" | \
-  sed "s|\${CPU}|${CPU}|g" | \
-  sed "s|\${MEMORY}|${MEMORY}|g" | \
-  sed "s|\${DOMAIN}|${DOMAIN}|g" | \
-  sed "s|\${START_TIME}|${START_TIME}|g" | \
-  sed "s|\${END_TIME}|${END_TIME}|g" | \
-  sed "s|\${VLESS_LINK}|${VLESS_LINK}|g")
-
-# ✅ Send to Telegram (HTML parse mode)
+# ✅ Send to Telegram (MarkdownV2)
 curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
   -d chat_id="${TELEGRAM_CHAT_ID}" \
   --data-urlencode "text=${MESSAGE}" \
-  -d parse_mode="HTML" \
+  -d parse_mode="MarkdownV2" \
   -d disable_web_page_preview="true" \
   -d "reply_markup={\"inline_keyboard\":[[{\"text\":\"📋 COPY CODE\",\"url\":\"https://t.me/share/url?url=${VLESS_LINK}\"}]]}"
-  
+
 # ✅ Console Output
 CONSOLE_MESSAGE="GCP VLESS Deployment → Success ✅
 ━━━━━━━━━━━━━━━━━━━━
