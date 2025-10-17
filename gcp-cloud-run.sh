@@ -539,30 +539,33 @@ END_TIME=$(TZ='Asia/Yangon' date -d "+5 hours" +"%Y-%m-%d %I:%M:%S %p")
 # VLESS link
 VLESS_LINK="vless://${UUID}@${HOST_DOMAIN}:443?path=%2Ftg-%40trenzych&security=tls&alpn=h3%2Ch2%2Chttp%2F1.1&encryption=none&host=${DOMAIN}&fp=randomized&type=ws&sni=${DOMAIN}#${SERVICE_NAME}"
 
-# ✅ Telegram Message creation (HTML format with selective quote)
-MESSAGE="<blockquote><b>GCP VLESS Deployment Success ✅</b></blockquote>
+# ✅ Telegram Message creation (HTML format, full quote sections)
+MESSAGE=$(cat <<EOF
+<blockquote><b>GCP VLESS Deployment Success ✅</b></blockquote>
 ━━━━━━━━━━━━━━━━━━━━
-<blockquote><b>• Service:</b> <code>${SERVICE_NAME}</code>
-<b>• Region:</b> <code>${REGION}</code>
-<b>• Resources:</b> <code>${CPU} CPU | ${MEMORY} RAM</code>
-<b>• Domain:</b> <code>${DOMAIN}</code>
-
-<b>• Start:</b> <code>${START_TIME}</code>
-<b>• End:</b> <code>${END_TIME}</code></blockquote>
+<blockquote>
+<b>• Service:</b> <code>${SERVICE_NAME}</code><br>
+<b>• Region:</b> <code>${REGION}</code><br>
+<b>• Resources:</b> <code>${CPU} CPU | ${MEMORY} RAM</code><br>
+<b>• Domain:</b> <code>${DOMAIN}</code><br><br>
+<b>• Start:</b> <code>${START_TIME}</code><br>
+<b>• End:</b> <code>${END_TIME}</code>
+</blockquote>
 ━━━━━━━━━━━━━━━━━━━━
 <blockquote><b>V2Ray Configuration Access Key</b></blockquote>
-<code>${VLESS_LINK}</code>
-
-<i>Usage: Copy the above link and import to your V2Ray client App</i>"
+<code>${VLESS_LINK}</code><br><br>
+<i>Usage: Copy the above link and import to your V2Ray client App</i>
+EOF
+)
 
 # ✅ Send to Telegram (HTML parse mode)
 curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-  -d "chat_id=${TELEGRAM_CHAT_ID}" \
-  -d "text=${MESSAGE}" \
-  -d "parse_mode=HTML" \
-  -d "disable_web_page_preview=true" \
+  -d chat_id="${TELEGRAM_CHAT_ID}" \
+  --data-urlencode "text=${MESSAGE}" \
+  -d parse_mode="HTML" \
+  -d disable_web_page_preview="true" \
   -d "reply_markup={\"inline_keyboard\":[[{\"text\":\"📋 COPY CODE\",\"url\":\"https://t.me/share/url?url=${VLESS_LINK}\"}]]}"
-
+  
 # ✅ Console Output
 CONSOLE_MESSAGE="GCP VLESS Deployment → Success ✅
 ━━━━━━━━━━━━━━━━━━━━
