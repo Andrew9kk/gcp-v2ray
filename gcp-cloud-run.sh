@@ -292,10 +292,11 @@ select_telegram_destination() {
     done
 }
 
-# Channel URL input function - FIXED VERSION
+
+# Channel URL + Custom Name input function
 get_channel_url() {
     echo
-    info "=== Channel URL Configuration ==="
+    info "=== Channel Configuration ==="
     echo "Default URL: https://t.me/trenzych"
     echo "You can use the default URL or enter your own custom URL."
     echo "Examples:"
@@ -303,39 +304,32 @@ get_channel_url() {
     echo "  - https://t.me/username"
     echo "  - https://example.com"
     echo
-    
+
+    # URL input
     while true; do
         read -p "Enter Channel URL [default: https://t.me/trenzych]: " CHANNEL_URL
         CHANNEL_URL=${CHANNEL_URL:-"https://t.me/trenzych"}
-        
+
         # Remove any trailing slashes
         CHANNEL_URL=$(echo "$CHANNEL_URL" | sed 's|/*$||')
-        
+
         if validate_url "$CHANNEL_URL"; then
             break
         else
             warn "Please enter a valid URL"
         fi
     done
-    
-    # Extract channel name for button text
-    if [[ "$CHANNEL_URL" == *"t.me/"* ]]; then
-        CHANNEL_NAME=$(echo "$CHANNEL_URL" | sed 's|.*t.me/||' | sed 's|/*$||')
-    else
-        # For non-telegram URLs, use the domain name
-        CHANNEL_NAME=$(echo "$CHANNEL_URL" | sed 's|.*://||' | sed 's|/.*||' | sed 's|www\.||')
-    fi
-    
-    # If channel name is empty, use default
-    if [[ -z "$CHANNEL_NAME" ]]; then
-        CHANNEL_NAME="TRENZYCH"
-    fi
-    
-    # Truncate long names for button text
+
+    echo
+    # Custom name input
+    read -p "Enter Channel Name [default: TRENZYCH]: " CHANNEL_NAME
+    CHANNEL_NAME=${CHANNEL_NAME:-"TRENZYCH"}
+
+    # Truncate if name too long
     if [[ ${#CHANNEL_NAME} -gt 20 ]]; then
         CHANNEL_NAME="${CHANNEL_NAME:0:17}..."
     fi
-    
+
     info "Channel URL: $CHANNEL_URL"
     info "Channel Name: $CHANNEL_NAME"
 }
