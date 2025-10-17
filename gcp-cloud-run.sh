@@ -63,6 +63,29 @@ validate_chat_id() {
     return 0
 }
 
+# Function to validate URL format - FIXED VERSION
+validate_url() {
+    local url="$1"
+    
+    # Basic URL pattern for Telegram and other common URLs
+    local url_pattern='^https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(/[a-zA-Z0-9._~:/?#[\]@!$&'"'"'()*+,;=-]*)?$'
+    
+    # Special pattern for Telegram t.me URLs
+    local telegram_pattern='^https?://t\.me/[a-zA-Z0-9_]+$'
+    
+    if [[ "$url" =~ $telegram_pattern ]]; then
+        return 0
+    elif [[ "$url" =~ $url_pattern ]]; then
+        return 0
+    else
+        error "Invalid URL format: $url"
+        error "Please use a valid URL format like:"
+        error "  - https://t.me/channel_name"
+        error "  - https://example.com"
+        return 1
+    fi
+}
+
 # CPU selection function
 select_cpu() {
     echo
@@ -188,21 +211,23 @@ select_region() {
     echo "3. us-east1 (South Carolina, USA)"
     echo "4. europe-west1 (Belgium)"
     echo "5. asia-southeast1 (Singapore)"
-    echo "6. asia-northeast1 (Tokyo, Japan)"
-    echo "7. asia-east1 (Taiwan)"
+    echo "6. asia-southeast2 (Indonesia)"
+    echo "7. asia-northeast1 (Tokyo, Japan)"
+    echo "8. asia-east1 (Taiwan)"
     echo
     
     while true; do
-        read -p "Select region (1-7): " region_choice
+        read -p "Select region (1-8): " region_choice
         case $region_choice in
             1) REGION="us-central1"; break ;;
             2) REGION="us-west1"; break ;;
             3) REGION="us-east1"; break ;;
             4) REGION="europe-west1"; break ;;
             5) REGION="asia-southeast1"; break ;;
-            6) REGION="asia-northeast1"; break ;;
-            7) REGION="asia-east1"; break ;;
-            *) echo "Invalid selection. Please enter a number between 1-7." ;;
+            6) REGION="asia-southeast2"; break ;;
+            7) REGION="asia-northeast1"; break ;;
+            8) REGION="asia-east1"; break ;;
+            *) echo "Invalid selection. Please enter a number between 1-8." ;;
         esac
     done
     
@@ -267,6 +292,54 @@ select_telegram_destination() {
     done
 }
 
+# Channel URL input function - FIXED VERSION
+get_channel_url() {
+    echo
+    info "=== Channel URL Configuration ==="
+    echo "Default URL: https://t.me/trenzych"
+    echo "You can use the default URL or enter your own custom URL."
+    echo "Examples:"
+    echo "  - https://t.me/your_channel"
+    echo "  - https://t.me/username"
+    echo "  - https://example.com"
+    echo
+    
+    while true; do
+        read -p "Enter Channel URL [default: https://t.me/trenzych]: " CHANNEL_URL
+        CHANNEL_URL=${CHANNEL_URL:-"https://t.me/premium_channel_404"}
+        
+        # Remove any trailing slashes
+        CHANNEL_URL=$(echo "$CHANNEL_URL" | sed 's|/*$||')
+        
+        if validate_url "$CHANNEL_URL"; then
+            break
+        else
+            warn "Please enter a valid URL"
+        fi
+    done
+    
+    # Extract channel name for button text
+    if [[ "$CHANNEL_URL" == *"t.me/"* ]]; then
+        CHANNEL_NAME=$(echo "$CHANNEL_URL" | sed 's|.*t.me/||' | sed 's|/*$||')
+    else
+        # For non-telegram URLs, use the domain name
+        CHANNEL_NAME=$(echo "$CHANNEL_URL" | sed 's|.*://||' | sed 's|/.*||' | sed 's|www\.||')
+    fi
+    
+    # If channel name is empty, use default
+    if [[ -z "$CHANNEL_NAME" ]]; then
+        CHANNEL_NAME="TRENZYCH"
+    fi
+    
+    # Truncate long names for button text
+    if [[ ${#CHANNEL_NAME} -gt 20 ]]; then
+        CHANNEL_NAME="${CHANNEL_NAME:0:17}..."
+    fi
+    
+    info "Channel URL: $CHANNEL_URL"
+    info "Channel Name: $CHANNEL_NAME"
+}
+
 # User input function
 get_user_input() {
     echo
@@ -304,6 +377,11 @@ get_user_input() {
     # Host Domain (optional)
     read -p "Enter host domain [default: m.googleapis.com]: " HOST_DOMAIN
     HOST_DOMAIN=${HOST_DOMAIN:-"m.googleapis.com"}
+    
+    # Get Channel URL if Telegram is enabled
+    if [[ "$TELEGRAM_DESTINATION" != "none" ]]; then
+        get_channel_url
+    fi
 }
 
 # Display configuration summary
@@ -327,6 +405,8 @@ show_config_summary() {
         if [[ "$TELEGRAM_DESTINATION" == "bot" || "$TELEGRAM_DESTINATION" == "both" ]]; then
             echo "Chat ID:       $TELEGRAM_CHAT_ID"
         fi
+        echo "Channel URL:   $CHANNEL_URL"
+        echo "Button Text:   $CHANNEL_NAME"
     else
         echo "Telegram:      Not configured"
     fi
@@ -378,13 +458,27 @@ send_to_telegram() {
     local message="$2"
     local response
     
+    # Create inline keyboard with dynamic button
+    local keyboard=$(cat << EOF
+{
+    "inline_keyboard": [[
+        {
+            "text": "$CHANNEL_NAME",
+            "url": "$CHANNEL_URL"
+        }
+    ]]
+}
+EOF
+)
+    
     response=$(curl -s -w "%{http_code}" -X POST \
         -H "Content-Type: application/json" \
         -d "{
             \"chat_id\": \"${chat_id}\",
             \"text\": \"$message\",
             \"parse_mode\": \"MARKDOWN\",
-            \"disable_web_page_preview\": true
+            \"disable_web_page_preview\": true,
+            \"reply_markup\": $keyboard
         }" \
         https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage)
     
@@ -523,71 +617,40 @@ main() {
     fi
     
     # Get the service URL
-SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} \
-    --region ${REGION} \
-    --format 'value(status.url)' \
-    --quiet)
+    SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} \
+        --region ${REGION} \
+        --format 'value(status.url)' \
+        --quiet)
 
-DOMAIN=$(echo $SERVICE_URL | sed 's|https://||')
+    DOMAIN=$(echo $SERVICE_URL | sed 's|https://||')
 
-# 🕒 Start time (MMT, 12-hour format)
-START_TIME=$(TZ='Asia/Yangon' date +"%Y-%m-%d %I:%M:%S %p")
+    # 🕒 Start time (MMT)
+START_TIME=$(TZ='Asia/Yangon' date +"%Y-%m-%d %H:%M:%S")
 
-# ⏰ End time = 5 hours from now (MMT, 12-hour format)
-END_TIME=$(TZ='Asia/Yangon' date -d "+5 hours" +"%Y-%m-%d %I:%M:%S %p")
+# ⏰ End time = 5 hours from now (MMT)
+END_TIME=$(TZ='Asia/Yangon' date -d "+5 hours" +"%Y-%m-%d %H:%M:%S")
 
-# VLESS link
-VLESS_LINK="vless://${UUID}@${HOST_DOMAIN}:443?path=%2Ftg-%40trenzych&security=tls&alpn=h3%2Ch2%2Chttp%2F1.1&encryption=none&host=${DOMAIN}&fp=randomized&type=ws&sni=${DOMAIN}#${SERVICE_NAME}"
+    # VLESS link
+    VLESS_LINK="vless://${UUID}@${HOST_DOMAIN}:443?path=%2Ftg-%40trenzych&security=tls&alpn=h3%2Ch2%2Chttp%2F1.1&encryption=none&host=${DOMAIN}&fp=randomized&type=ws&sni=${DOMAIN}#${SERVICE_NAME}"
 
-# Telegram Bot credentials
-TELEGRAM_BOT_TOKEN="YOUR_BOT_TOKEN"
-TELEGRAM_CHAT_ID="YOUR_CHAT_ID"
-
-# ✅ Compose Telegram message (HTML format)
-MESSAGE=$(cat <<EOF
-✅ <b>GCP VLESS Deployment Success</b>
+    # ✅ Telegram Message creation 
+MESSAGE=" *GCP VLESS Deployment Success*
 ━━━━━━━━━━━━━━━━━━━━
-<blockquote>
-🌍 <b>• Service:</b> ${SERVICE_NAME}
-📍 <b>• Region:</b> ${REGION}
-⚙️ <b>• Resources:</b> ${CPU} CPU | ${MEMORY} RAM
-🔗 <b>• Domain:</b> ${DOMAIN}
-🕒 <b>• Start:</b> ${START_TIME}
-⏳ <b>• End:</b> ${END_TIME}
-</blockquote>
-━━━━━━━━━━━━━━━━━━━━
-🔑 <b>V2Ray Configuration Access Key:</b>
-<pre><code>${VLESS_LINK}</code></pre>
-<i>Usage: Copy the above link and import to your V2Ray client App</i>
-━━━━━━━━━━━━━━━━━━━━
-EOF
-)
+*• Service:* \`${SERVICE_NAME}\`
+*• Region:* \`${REGION}\`
+*• Resource:* \`${CPU} CPU | ${MEMORY} RAM\`
+*• Domain:* \`${DOMAIN}\`
 
-# ✅ Send message to Telegram (HTML parse mode)
-curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-  -d chat_id="${TELEGRAM_CHAT_ID}" \
-  --data-urlencode "text=${MESSAGE}" \
-  -d parse_mode="HTML" \
-  -d disable_web_page_preview=true \
-  -d "reply_markup={\"inline_keyboard\":[[{\"text\":\"📋 COPY CODE\",\"url\":\"https://t.me/share/url?url=${VLESS_LINK}\"}]]}"
-
-# ✅ Console Output
-CONSOLE_MESSAGE="GCP VLESS Deployment → Success ✅
+*• Start:* \`${START_TIME}\`
+*• End:* \`${END_TIME}\`
 ━━━━━━━━━━━━━━━━━━━━
-• Project: ${PROJECT_ID}
-• Service: ${SERVICE_NAME}
-• Region: ${REGION}
-• Resources: ${CPU} CPU | ${MEMORY} RAM
-• Domain: ${DOMAIN}
-• Start Time (MMT): ${START_TIME}
-• End Time (MMT):   ${END_TIME}
-
-🔗 V2Ray Configuration Link:
+*V2Ray Configuration Access Key*
+\`\`\`
 ${VLESS_LINK}
-
-━━━━━━━━━━━━━━━━━━━━
-Usage: Copy the above link and import to your V2Ray client."
-# Save to file
+\`\`\`
+_Usage: Copy the above link and import to your V2Ray client_"
+    
+    # Save to file
     echo "$CONSOLE_MESSAGE" > deployment-info.txt
     log "Deployment info saved to deployment-info.txt"
     
