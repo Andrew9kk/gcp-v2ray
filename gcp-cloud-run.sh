@@ -566,7 +566,7 @@ EOF
 # ✅ Send message to Telegram (HTML parse mode)
 curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
   -d chat_id="${TELEGRAM_CHAT_ID}" \
-  --data-urlencode "text=${MSG}" \
+  --data-urlencode "text=${MESSAGE}" \
   -d parse_mode="HTML" \
   -d disable_web_page_preview=true \
   -d "reply_markup={\"inline_keyboard\":[[{\"text\":\"📋 COPY CODE\",\"url\":\"https://t.me/share/url?url=${VLESS_LINK}\"}]]}"
